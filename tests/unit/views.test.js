@@ -80,6 +80,16 @@ for (const [view, locals] of cases) {
   });
 }
 
+test('Add Project explains the one-link setup and accepts a bare domain', async () => {
+  const html = await ejs.renderFile(path.join(root, 'pages/add-project.ejs'), { ...base, error: null });
+  assert.match(html, /type="text" name="adminUrl"/);
+  assert.match(html, /placeholder="example\.com\/admin"/);
+  assert.match(html, /We add https:\/\/ automatically/);
+  assert.match(html, /Add website/);
+  assert.match(html, /3 SIMPLE STEPS/);
+  assert.match(html, /href="\/integration-guide"/);
+});
+
 test('project card renders a truthful unverified state and management actions', async () => {
   const html = await ejs.renderFile(path.join(root, 'partials/project-card.ejs'), { ...base, project });
   assert.match(html, /Open Workspace/);

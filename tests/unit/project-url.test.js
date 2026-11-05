@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { adminUrlSchema, normalizeAdminUrl } from '../../src/validators/project.schema.js';
+import { adminUrlSchema, createProjectSchema, normalizeAdminUrl } from '../../src/validators/project.schema.js';
 import { isPublicAddress } from '../../src/security/network.js';
 
 test('Admin URL validation accepts secure public URL shape only', () => {
@@ -9,6 +9,13 @@ test('Admin URL validation accepts secure public URL shape only', () => {
   assert.equal(adminUrlSchema.safeParse('https://user:pass@shop.example.com/admin').success, false);
   assert.equal(adminUrlSchema.safeParse('https://shop.example.com/admin?token=abc').success, false);
   assert.equal(adminUrlSchema.safeParse('https://shop.example.com:8443/admin').success, false);
+});
+
+test('project registration adds HTTPS when a user pastes a bare domain', () => {
+  assert.equal(adminUrlSchema.parse('shop.example.com/admin'), 'https://shop.example.com/admin');
+  assert.equal(adminUrlSchema.parse('  www.example.com  '), 'https://www.example.com');
+  assert.equal(createProjectSchema.parse({ adminUrl: 'shop.example.com/admin' }).adminUrl, 'https://shop.example.com/admin');
+  assert.equal(adminUrlSchema.safeParse('http://shop.example.com/admin').success, false);
 });
 
 test('Admin URL normalization removes redundant trailing slashes', () => {
