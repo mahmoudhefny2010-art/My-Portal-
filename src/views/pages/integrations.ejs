@@ -1,0 +1,86 @@
+<section class="page-intro">
+  <div><p class="eyebrow">CONNECTIONS</p><h1>Integration Manager</h1><p>See what each original website supports and what still needs implementation.</p></div>
+  <a class="button button-secondary" href="/projects/new">＋ Add a Project</a>
+</section>
+<div class="integration-summary">
+  <div class="summary-mark">◇</div><div><strong>Keep each website’s own backend and database</strong><p>The portal does not copy client business data. A check can inspect public HTTP headers; it cannot prove authentication, forms, or writes.</p></div>
+</div>
+
+<% if (!projects.length) { %>
+  <section class="empty-state">
+    <div class="empty-icon">◇</div><h2>No integrations to review</h2><p>Add a project to begin tracking its connection status and integration capabilities.</p>
+    <a class="button button-primary" href="/projects/new">Add Project</a>
+  </section>
+<% } else { %>
+  <div class="integration-list">
+    <% projects.forEach((project) => { const integration = project.integration; const canManageProject = currentUser.role === 'SUPER_ADMIN' || project.access.some((access) => access.canManage); %>
+      <article class="integration-card">
+        <header class="integration-card-header">
+          <div class="integration-project">
+            <span class="project-icon small-project-icon"><%= project.name.slice(0, 1).toUpperCase() %></span>
+            <div><h2><a href="/projects/<%= project.slug %>/workspace"><%= project.name %></a></h2><span><%= project.adminUrl %></span></div>
+          </div>
+          <span class="integration-pill <%= project.integrationStatus === 'VERIFIED' ? 'integration-ready' : '' %>"><%= project.integrationStatus === 'VERIFIED' ? 'Owner-verified embedding' : 'Configuration required' %></span>
+        </header>
+        <div class="frame-policy-status">
+          <span class="policy-indicator <%= integration?.framePolicy === 'POLICY_ALLOWS' ? 'policy-ok' : integration?.framePolicy === 'BLOCKED' ? 'policy-no' : '' %>"><%= integration?.framePolicy === 'POLICY_ALLOWS' ? '✓' : integration?.framePolicy === 'BLOCKED' ? '×' : '·' %></span>
+          <div><strong>Dashboard frame policy</strong><p><%= integration?.framePolicyMessage || 'Not checked yet. The portal will not embed this dashboard until policy and owner verification are complete.' %></p></div>
+          <% if (canManageProject) { %><form action="/projects/<%= project.slug %>/integration/check" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button button-secondary button-small" type="submit">Check policy</button></form><% } %>
+        </div>
+
+        <% if (integration?.framePolicy === 'POLICY_ALLOWS' && !integration.authenticationVerifiedAt && canManageProject) { %>
+          <form class="attestation-form" action="/projects/<%= project.slug %>/integration/verify-embedding" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label><input type="checkbox" name="confirmation" required><span>I reviewed this dashboard in a browser, signed in using its normal authentication, and verified navigation, forms, and an authorized write action. I understand this is an owner attestation.</span></label>
+            <button class="button button-primary button-small" type="submit">Record verification</button>
+          </form>
+        <% } else if (integration?.embeddingVerifiedAt) { %>
+          <p class="verification-note">Owner-attested <%= new Date(integration.embeddingVerifiedAt).toLocaleString() %>. The page is embedded only while the latest response policy allows it.</p>
+        <% } %>
+
+        <div class="capability-grid">
+          <% const capabilityNames = {
+            'secure-embedding': ['Secure dashboard embedding', integration?.embeddingVerifiedAt ? 'READY' : 'CONFIGURATION_REQUIRED'],
+            'live-admin-audit-feed': ['Signed admin audit events', integration?.liveAuditCapability || 'CONFIGURATION_REQUIRED'],
+            'live-data-sync': ['Live data synchronization', integration?.syncCapability || 'CONFIGURATION_REQUIRED'],
+            'optimistic-concurrency': ['Conflict prevention', integration?.conflictCapability || 'CONFIGURATION_REQUIRED'],
+          }; %>
+          <% Object.entries(capabilityNames).forEach(([key, item]) => { const capability = project.capabilities.find((entry) => entry.name === key); const state = key === 'secure-embedding' ? item[1] : (capability?.status || item[1]); %>
+            <div class="capability-item">
+              <span class="capability-state state-<%= state.toLowerCase() %>"><i></i><%= state.replaceAll('_', ' ').toLowerCase() %></span>
+              <strong><%= item[0] %></strong>
+              <small><%= capability?.evidence || (key === 'live-admin-audit-feed' && integration?.webhookConfiguredAt
+                ? integration.lastSignedEventAt ? 'Signed events have been received.' : 'Secret is set; waiting for the client application’s first signed event.'
+                : key === 'live-data-sync'
+                  ? 'Requires the original application to publish authorized updates.'
+                  : key === 'optimistic-concurrency'
+                    ? 'Requires record version checks in the original application.'
+                    : 'Requires browser and authentication review.') %></small>
+            </div>
+          <% }) %>
+        </div>
+
+        <footer class="integration-card-footer">
+          <div><strong>Audit event endpoint</strong><code><%= (portalOrigin || 'https://your-portal.example') + '/api/projects/' + project.slug + '/audit-events' %></code></div>
+          <div class="secret-controls">
+            <span class="secret-status"><%= integration?.lastSignedEventAt ? 'Live signed feed active' : integration?.webhookConfiguredAt ? 'Awaiting first signed event' : 'Secret not configured' %></span>
+            <% if (canManageProject) { %>
+              <button class="button button-secondary button-small" type="button" data-rotate-secret="<%= project.slug %>"><%= integration?.webhookConfiguredAt ? 'Rotate webhook secret' : 'Create webhook secret' %></button>
+            <% } %>
+          </div>
+        </footer>
+        <div class="secret-output" id="secret-output-<%= project.slug %>" hidden aria-live="polite"></div>
+      </article>
+    <% }) %>
+  </div>
+<% } %>
+
+<section class="panel integration-contract-note">
+  <p class="eyebrow">VERIFICATION RULES</p>
+  <ul>
+    <li>Embedding requires an explicit CSP frame policy and a separate owner review of authentication and core workflows.</li>
+    <li>A signed audit endpoint becomes active only after the portal receives a valid event from the original app.</li>
+    <li>Live synchronization and conflict prevention stay pending until client-side behavior is implemented and measured.</li>
+  </ul>
+  <a class="text-link" href="/integration-guide">Read the integration contract <span aria-hidden="true">↗</span></a>
+</section>

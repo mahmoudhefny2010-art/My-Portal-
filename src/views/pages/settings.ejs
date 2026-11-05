@@ -1,0 +1,82 @@
+<section class="page-intro">
+  <div><p class="eyebrow">PREFERENCES &amp; SECURITY</p><h1>Settings</h1><p>Update this portal account, its appearance, and shared workspace settings.</p></div>
+</section>
+<% if (error) { %><div class="form-alert page-alert" role="alert"><%= error %></div><% } %>
+<div class="settings-layout">
+  <nav class="settings-nav" aria-label="Settings sections">
+    <a href="#general">General</a><a href="#appearance">Appearance</a><a href="#security">Security</a><a href="#notifications-settings">Notifications</a><a href="#integrations-settings">Integrations</a>
+  </nav>
+  <div class="settings-content">
+    <section class="panel settings-panel" id="general">
+      <div class="settings-panel-heading"><div><p class="eyebrow">GENERAL</p><h2>Portal profile</h2><p>Portal account: <strong><%= currentUser.name %></strong> · <%= currentUser.email %></p></div><span class="settings-heading-icon">◈</span></div>
+      <% if (currentUser.role === 'SUPER_ADMIN') { %>
+        <form action="/settings" method="post" class="settings-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="portal-name">Portal name</label><input id="portal-name" name="portalName" value="<%= configuration.portalName %>" required maxlength="120">
+          <label for="portal-logo">Logo URL <span class="optional-label">Optional · public HTTPS image</span></label><input id="portal-logo" name="logoUrl" type="url" value="<%= configuration.logoUrl || '' %>" placeholder="https://example.com/logo.svg">
+          <label for="accent-color">Accent color</label><select id="accent-color" name="accentColor"><option value="#8b5cf6" <%= configuration.accentColor === '#8b5cf6' ? 'selected' : '' %>>Violet</option><option value="#2563eb" <%= configuration.accentColor === '#2563eb' ? 'selected' : '' %>>Blue</option><option value="#0891b2" <%= configuration.accentColor === '#0891b2' ? 'selected' : '' %>>Teal</option><option value="#db2777" <%= configuration.accentColor === '#db2777' ? 'selected' : '' %>>Rose</option></select>
+          <button class="button button-primary" type="submit">Save portal settings</button>
+        </form>
+      <% } else { %>
+        <p class="muted-copy">Your portal owner manages shared branding. You can update your own theme and notification preferences here.</p>
+      <% } %>
+    </section>
+
+    <section class="panel settings-panel" id="appearance">
+      <div class="settings-panel-heading"><div><p class="eyebrow">APPEARANCE</p><h2>Choose a theme</h2><p>Saved to your portal account and applied without reloading the page.</p></div><span class="settings-heading-icon">◐</span></div>
+      <div class="theme-options" role="group" aria-label="Theme preference">
+        <button type="button" data-theme-option="DARK" class="<%= preference.theme === 'DARK' ? 'is-selected' : '' %>"><span class="theme-preview theme-preview-dark">◐</span><strong>Dark</strong><small>Deep navy and violet</small></button>
+        <button type="button" data-theme-option="LIGHT" class="<%= preference.theme === 'LIGHT' ? 'is-selected' : '' %>"><span class="theme-preview theme-preview-light">◑</span><strong>Light</strong><small>Soft white surfaces</small></button>
+        <button type="button" data-theme-option="SYSTEM" class="<%= preference.theme === 'SYSTEM' ? 'is-selected' : '' %>"><span class="theme-preview theme-preview-system">◒</span><strong>System</strong><small>Follow device setting</small></button>
+      </div>
+      <p class="fine-print" data-theme-error role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel settings-panel" id="security">
+      <div class="settings-panel-heading"><div><p class="eyebrow">SECURITY</p><h2>Password &amp; sessions</h2><p>Sessions use server-side storage with an eight-hour rolling expiry.</p></div><span class="settings-heading-icon">◇</span></div>
+      <form action="/settings/password" method="post" class="settings-form password-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label for="current-password">Current password</label><input id="current-password" name="currentPassword" type="password" autocomplete="current-password" required>
+        <label for="new-password">New password</label><input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><small class="field-help">Use at least 12 characters.</small>
+        <label for="confirm-password">Confirm new password</label><input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+        <button class="button button-primary" type="submit">Change password and revoke other sessions</button>
+      </form>
+      <div class="session-management"><div><strong><%= sessionCount %> active portal session<%= sessionCount === 1 ? '' : 's' %></strong><small>Includes the session you are using now.</small></div><form action="/settings/sessions/revoke-others" method="post" data-confirm="Sign out every other session on this account?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button button-secondary" type="submit">Revoke other sessions</button></form></div>
+    </section>
+
+    <section class="panel settings-panel" id="notifications-settings">
+      <div class="settings-panel-heading"><div><p class="eyebrow">NOTIFICATIONS</p><h2>Portal alerts</h2><p>Preferences apply to new project and security events.</p></div><span class="settings-heading-icon">♧</span></div>
+      <div class="push-notification-controls">
+        <% if (typeof oneSignalEnabled !== 'undefined' && oneSignalEnabled) { %>
+          <p class="fine-print" data-onesignal-status role="status" aria-live="polite">Checking browser notification status…</p>
+          <button class="button button-secondary" type="button" data-onesignal-toggle disabled>Checking…</button>
+        <% } else { %>
+          <p class="fine-print">Browser push is not configured yet. Add the OneSignal App ID and REST API key to the server environment.</p>
+        <% } %>
+      </div>
+      <% if (typeof oneSignalEnabled !== 'undefined' && oneSignalEnabled) { %>
+        <div class="push-notification-test">
+          <button class="button button-secondary" type="button" data-onesignal-test disabled>Send test notification</button>
+          <p class="fine-print" data-onesignal-test-status role="status" aria-live="polite"></p>
+        </div>
+      <% } %>
+      <% const notificationTypes = [
+        ['PROJECT_OFFLINE', 'Project goes offline'], ['PROJECT_ONLINE', 'Project returns online'],
+        ['INTEGRATION_FAILED', 'Integration check fails'], ['INTEGRATION_CONNECTED', 'Integration becomes ready'],
+        ['ADMIN_CHANGE', 'Signed external admin change'], ['SECURITY_WARNING', 'Security warning'],
+        ['AUDIT_INTEGRATION_FAILURE', 'Audit event integration failure'], ['SYNCHRONIZATION_FAILURE', 'Synchronization failure'],
+      ]; const notificationSettings = preference.notificationSettings || {}; %>
+      <form action="/settings/notifications" method="post" class="notification-preferences">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% notificationTypes.forEach(([type, label]) => { %><label class="switch-row"><span><strong><%= label %></strong><small><%= typeof oneSignalEnabled !== 'undefined' && oneSignalEnabled ? 'Portal inbox and browser push' : 'Portal notification center only' %></small></span><input type="checkbox" name="enabledTypes" value="<%= type %>" <%= notificationSettings[type] !== false ? 'checked' : '' %>><i aria-hidden="true"></i></label><% }) %>
+        <button class="button button-primary" type="submit">Save notification preferences</button>
+      </form>
+    </section>
+
+    <section class="panel settings-panel" id="integrations-settings">
+      <div class="settings-panel-heading"><div><p class="eyebrow">INTEGRATIONS</p><h2>Project defaults</h2><p>External dashboards need their own implementation before the portal can report sync or conflict protection as active.</p></div><span class="settings-heading-icon">↗</span></div>
+      <div class="setting-facts"><div><span>Project database access</span><strong>Not requested</strong></div><div><span>Default URL policy</span><strong>Public HTTPS only</strong></div><div><span>Audit feed</span><strong>Signed HMAC events</strong></div><div><span>Sync and conflict status</span><strong>Requires client support</strong></div></div>
+      <a class="button button-secondary" href="/integrations">Manage integration capabilities</a>
+    </section>
+  </div>
+</div>

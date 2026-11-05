@@ -1,0 +1,57 @@
+<section class="page-intro">
+  <div><p class="eyebrow">ACCESS CONTROL</p><h1>Users &amp; Permissions</h1><p>Portal access is separate from each connected website’s own user roles.</p></div>
+</section>
+<% if (error) { %><div class="form-alert page-alert" role="alert"><%= error %></div><% } %>
+<section class="user-management-layout">
+  <article class="panel user-create-panel">
+    <p class="eyebrow">INVITE A TEAMMATE</p><h2>Create portal user</h2>
+    <p class="muted-copy">Add their email and role. They can sign in with Google using this same email address.</p>
+    <form action="/users" method="post" class="stack-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="new-user-name">Full name</label><input id="new-user-name" name="name" required maxlength="120">
+      <label for="new-user-email">Email</label><input id="new-user-email" name="email" type="email" required maxlength="254" autocomplete="off">
+      <label for="new-user-role">Portal role</label>
+      <select id="new-user-role" name="role"><option value="VIEWER">User</option><option value="PROJECT_MANAGER">Developer</option><option value="ADMIN">Admin</option></select>
+      <button class="button button-primary" type="submit">Create user <span aria-hidden="true">→</span></button>
+    </form>
+  </article>
+  <article class="panel user-roles-panel">
+    <p class="eyebrow">ROLE CAPABILITIES</p><h2>Portal roles</h2>
+    <div class="role-description"><strong>Super Admin</strong><p>Full portal access, project permissions, settings, and user management.</p></div>
+    <div class="role-description"><strong>Admin</strong><p>Can add projects and manage projects explicitly assigned to them.</p></div>
+    <div class="role-description"><strong>Developer</strong><p>Can manage assigned projects when project access is granted.</p></div>
+    <div class="role-description"><strong>User</strong><p>Can read assigned project workspaces and logs.</p></div>
+  </article>
+</section>
+
+<section class="section-heading users-heading"><div><p class="eyebrow">PORTAL MEMBERS</p><h2><%= users.length %> <%= users.length === 1 ? 'user' : 'users' %></h2></div></section>
+<div class="user-list">
+  <% users.forEach((user) => { %>
+    <article class="panel user-row">
+      <div class="user-identity"><span class="avatar user-avatar"><%= user.name.slice(0, 1).toUpperCase() %></span><div><strong><%= user.name %></strong><small><%= user.email %></small><small>Added <%= new Date(user.createdAt).toLocaleDateString() %></small></div></div>
+      <div class="user-role-cell">
+        <% if (user.role === 'SUPER_ADMIN') { %><span class="role-badge role-super">Super Admin</span><% } else { %>
+          <form action="/users/<%= user.id %>/role" method="post" class="inline-control"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="sr-only" for="role-<%= user.id %>">Role for <%= user.name %></label><select id="role-<%= user.id %>" name="role" data-autosubmit><option value="ADMIN" <%= user.role === 'ADMIN' ? 'selected' : '' %>>Admin</option><option value="PROJECT_MANAGER" <%= user.role === 'PROJECT_MANAGER' ? 'selected' : '' %>>Developer</option><option value="VIEWER" <%= user.role === 'VIEWER' ? 'selected' : '' %>>User</option></select><noscript><button class="button button-small button-secondary">Save role</button></noscript></form>
+        <% } %>
+      </div>
+      <div class="user-access-cell"><strong><%= user.role === 'SUPER_ADMIN' ? 'All projects' : user.projectAccess.length + ' assigned' %></strong><small><%= user.projectAccess.filter((access) => access.canManage).length %> manageable</small></div>
+      <div class="user-status-cell"><span class="user-status <%= user.isActive ? 'user-active' : 'user-inactive' %>"><i></i><%= user.isActive ? 'Active' : 'Disabled' %></span></div>
+      <div class="user-actions">
+        <% if (user.role !== 'SUPER_ADMIN') { %>
+          <details class="project-menu"><summary aria-label="Manage access for <%= user.name %>">⋮</summary><div class="menu-popover user-popover">
+            <form action="/users/<%= user.id %>/access" method="post" class="access-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><strong>Project access</strong>
+              <% projects.forEach((project) => { const hasAccess = user.projectAccess.some((access) => access.projectId === project.id); %>
+                <label><input type="checkbox" name="projectIds" value="<%= project.id %>" <%= hasAccess ? 'checked' : '' %>><span><%= project.name %></span></label>
+              <% }) %>
+              <button class="button button-small button-primary" type="submit">Save access</button>
+            </form>
+            <form action="/users/<%= user.id %>/status" method="post" data-confirm="<%= user.isActive ? 'Disable this portal account?' : 'Reactivate this portal account?' %>">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="active" value="<%= user.isActive ? 'false' : 'true' %>"><button type="submit"><%= user.isActive ? 'Disable account' : 'Reactivate account' %></button>
+            </form>
+          </div></details>
+        <% } %>
+      </div>
+    </article>
+  <% }) %>
+</div>

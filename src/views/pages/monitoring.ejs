@@ -1,0 +1,35 @@
+<section class="page-intro">
+  <div><p class="eyebrow">SERVICE HEALTH</p><h1>Monitoring</h1><p>Availability reflects observed HTTPS checks. No checks means no uptime estimate.</p></div>
+  <% if (currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN') { %>
+    <form action="/monitoring/check-all" method="post" data-confirm="Run a safe check for up to 20 projects now?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button button-primary" type="submit">↻ Check up to 20 projects</button>
+    </form>
+  <% } %>
+</section>
+<div class="monitoring-summary-grid">
+  <% const onlineCount = projects.filter((project) => project.status === 'ONLINE').length; %>
+  <% const offlineCount = projects.filter((project) => project.status === 'OFFLINE').length; %>
+  <% const unknownCount = projects.filter((project) => project.status === 'UNKNOWN').length; %>
+  <article class="panel monitoring-summary"><span class="status-dot status-dot-online"></span><div><strong><%= onlineCount %></strong><small>Online on last check</small></div></article>
+  <article class="panel monitoring-summary"><span class="status-dot status-dot-offline"></span><div><strong><%= offlineCount %></strong><small>Offline on last check</small></div></article>
+  <article class="panel monitoring-summary"><span class="status-dot status-dot-warning"></span><div><strong><%= unknownCount %></strong><small>Not checked</small></div></article>
+  <article class="panel monitoring-summary"><span class="monitoring-symbol">◷</span><div><strong>Daily</strong><small>Scheduled check cadence</small></div></article>
+</div>
+<% if (!projects.length) { %>
+  <section class="empty-state"><div class="empty-icon">⌁</div><h2>No projects to monitor</h2><p>Register a public Admin URL to start recording real response checks.</p><a class="button button-primary" href="/projects/new">Add Project</a></section>
+<% } else { %>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th>Project</th><th>Website status</th><th>Integration</th><th>Response</th><th>Last health check</th><th>Action</th></tr></thead>
+      <tbody><% projects.forEach((project) => { %><tr>
+        <td><a class="table-project-name" href="/projects/<%= project.slug %>/workspace"><%= project.name %></a><small><%= project.siteUrl %></small></td>
+        <td><span class="status-pill status-<%= project.status.toLowerCase() %>"><i></i><%= project.status === 'UNKNOWN' ? 'Not checked' : project.status.toLowerCase() %></span><small><%= project.statusMessage || 'No result recorded.' %></small></td>
+        <td><span class="integration-pill"><%= project.integrationStatus === 'VERIFIED' ? 'Owner-verified' : 'Setup required' %></span></td>
+        <td><%= project.responseMs === null ? '—' : project.responseMs + ' ms' %><small><%= project._count.healthChecks %> recorded checks</small></td>
+        <td><%= project.lastHealthCheckAt ? new Date(project.lastHealthCheckAt).toLocaleString() : 'Not checked yet' %></td>
+        <td><% if (currentUser.role === 'SUPER_ADMIN' || project.access.some((access) => access.canManage)) { %><form action="/projects/<%= project.slug %>/check" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="table-action" type="submit">Check now</button></form><% } %></td>
+      </tr><% }) %></tbody>
+    </table>
+  </div>
+<% } %>
+<div class="callout callout-info monitoring-note"><strong>Measurement limits</strong><p>The scheduled check runs once each day and checks up to 20 due projects per run. A manual check measures that URL immediately. The percentage on the dashboard is a share of recorded checks over the last 30 days, not a guarantee of continuous availability.</p></div>

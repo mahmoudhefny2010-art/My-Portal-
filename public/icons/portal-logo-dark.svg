@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" fill="none">
+  <defs>
+    <linearGradient id="plate" x1="28" y1="25" x2="184" y2="196" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#28105D"/>
+      <stop offset=".55" stop-color="#100A2D"/>
+      <stop offset="1" stop-color="#071225"/>
+    </linearGradient>
+    <linearGradient id="top" x1="62" y1="54" x2="153" y2="101" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF9FF"/>
+      <stop offset=".56" stop-color="#E5D2FF"/>
+      <stop offset="1" stop-color="#B883FF"/>
+    </linearGradient>
+    <linearGradient id="left" x1="62" y1="91" x2="108" y2="161" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5E9FF"/>
+      <stop offset="1" stop-color="#B78AFF"/>
+    </linearGradient>
+    <linearGradient id="right" x1="111" y1="104" x2="158" y2="158" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D9BCFF"/>
+      <stop offset="1" stop-color="#8E46F5"/>
+    </linearGradient>
+    <linearGradient id="depth" x1="62" y1="135" x2="160" y2="173" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6C22D9"/>
+      <stop offset="1" stop-color="#32108C"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientTransform="matrix(0 117 -117 0 110 111)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#891FFF" stop-opacity=".5"/>
+      <stop offset="1" stop-color="#891FFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="0" y="0" width="220" height="220" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <filter id="markGlow" x="39" y="35" width="139" height="151" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+  <circle cx="110" cy="110" r="105" fill="url(#halo)"/>
+  <rect x="18" y="18" width="184" height="184" rx="48" fill="#7626FF" opacity=".52" filter="url(#glow)"/>
+  <rect x="19" y="19" width="182" height="182" rx="47" fill="url(#plate)" stroke="#8C42FF" stroke-width="2"/>
+  <path d="M58 77 104 52a8 8 0 0 1 8 0l48 25-48 27a8 8 0 0 1-8 0L58 77Z" stroke="#B96CFF" stroke-width="20" stroke-linejoin="round" opacity=".78" filter="url(#markGlow)"/>
+  <path d="m59 82 45 25v49l-45-25V82Z" fill="url(#left)"/>
+  <path d="m159 82-47 25v49l47-25V82Z" fill="url(#right)"/>
+  <path d="m59 132 49 27 51-27v16l-47 27a8 8 0 0 1-8 0l-45-25v-18Z" fill="url(#depth)"/>
+  <path d="m58 77 46-25a8 8 0 0 1 8 0l48 25-48 27a8 8 0 0 1-8 0L58 77Z" fill="url(#top)"/>
+  <path d="m77 77 31-17 32 17-32 18-31-18Z" fill="#21104A"/>
+  <rect x="96" y="74" width="7" height="12" rx="2" fill="#8D42F4"/>
+  <rect x="107" y="68" width="7" height="18" rx="2" fill="#A34FFF"/>
+  <rect x="118" y="62" width="7" height="24" rx="2" fill="#C47AFF"/>
+  <path d="m59 83 49 27 51-27M108 110v48M59 132l49 27 51-27" stroke="#FFF9FF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>
+</svg>

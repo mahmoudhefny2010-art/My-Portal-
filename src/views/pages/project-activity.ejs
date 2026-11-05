@@ -1,0 +1,16 @@
+<section class="page-intro">
+  <div><p class="eyebrow">PORTAL PROJECT HISTORY</p><h1><%= project.name %> activity</h1><p>Control Portal actions associated with this project, separate from client admin events.</p></div>
+  <a class="button button-secondary" href="/projects/<%= project.slug %>/workspace">← Project workspace</a>
+</section>
+<div class="callout callout-info"><strong>Portal audit history</strong><p>These events describe changes made in Control Portal. Client admin actions appear in the separate signed external audit feed.</p></div>
+<% if (!events.length) { %>
+  <section class="empty-state"><div class="empty-icon">◷</div><h2>No portal activity for this project</h2><p>Adding, editing, archiving, and verifying this project's integration will be recorded here.</p></section>
+<% } else { %>
+  <div class="activity-list activity-full">
+    <% events.forEach((event) => { %><article class="activity-row">
+      <span class="activity-dot <%= event.source === 'EXTERNAL_WEBHOOK' ? 'activity-dot-green' : '' %>"></span>
+      <div class="activity-main"><strong><%= event.summary %></strong><small><%= event.actor?.name || 'Connected website' %> · <%= event.action %> · <%= event.source === 'EXTERNAL_WEBHOOK' ? 'Signed client event' : 'Portal action' %></small></div>
+      <time datetime="<%= event.createdAt.toISOString() %>"><%= new Date(event.createdAt).toLocaleString() %></time>
+    </article><% }) %>
+  </div>
+<% } %>

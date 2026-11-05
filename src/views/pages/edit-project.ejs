@@ -1,0 +1,14 @@
+<section class="page-intro">
+  <div><p class="eyebrow">PROJECT SETTINGS</p><h1>Edit <%= project.name %></h1><p>The original Admin URL remains unchanged.</p></div>
+  <a class="button button-secondary" href="/projects/<%= project.slug %>/workspace">← Back to workspace</a>
+</section>
+<section class="panel form-panel narrow-panel">
+  <% if (error) { %><div class="form-alert" role="alert"><%= error %></div><% } %>
+  <form action="/projects/<%= project.slug %>/edit" method="post" class="stack-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label for="project-name">Project name</label><input id="project-name" name="name" value="<%= project.name %>" required maxlength="120">
+    <label for="project-category">Category <span class="optional-label">Optional</span></label><input id="project-category" name="category" value="<%= project.category || '' %>" maxlength="80" placeholder="Store, restaurant, portfolio…">
+    <label>Admin Dashboard URL</label><div class="readonly-url"><span>◈</span><code><%= project.adminUrl %></code></div>
+    <button class="button button-primary" type="submit">Save project details <span aria-hidden="true">→</span></button>
+  </form>
+</section>

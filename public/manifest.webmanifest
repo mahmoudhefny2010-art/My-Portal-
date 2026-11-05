@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Control Portal",
+  "short_name": "Control Portal",
+  "description": "A private workspace for managing your websites.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090b14",
+  "theme_color": "#090b14",
+  "icons": [
+    {
+      "src": "/icons/control-portal-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/control-portal-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

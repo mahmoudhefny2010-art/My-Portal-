@@ -1,0 +1,31 @@
+<section class="page-intro">
+  <div><p class="eyebrow">ONE-LINK REGISTRATION</p><h1>Add a project</h1><p>Register an existing website without changing its backend or database.</p></div>
+  <a class="button button-secondary" href="/projects">← Back to projects</a>
+</section>
+
+<section class="add-project-layout">
+  <div class="panel add-project-panel">
+    <div class="panel-icon">↗</div>
+    <p class="eyebrow">CONNECT YOUR WEBSITE</p>
+    <h2>Paste your Admin Dashboard URL</h2>
+    <p class="muted-copy">The portal will make one safe public HTTPS check for page metadata and response headers. A successful response does not verify sign-in, embedding, or admin features.</p>
+    <% if (error) { %><div class="form-alert" role="alert"><%= error %></div><% } %>
+    <form action="/projects" method="post" class="stack-form" data-busy-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="admin-url">Original Admin Dashboard URL</label>
+      <div class="input-with-prefix"><span aria-hidden="true">https://</span><input id="admin-url" type="url" name="adminUrl" value="<%= value || '' %>" placeholder="example.com/admin" inputmode="url" autocomplete="url" required maxlength="2048"></div>
+      <small class="field-help">Public HTTPS addresses only. Usernames, passwords, query strings, and token fragments are rejected.</small>
+      <button class="button button-primary button-wide" type="submit"><span>Connect Project</span><span aria-hidden="true">→</span></button>
+      <p class="form-note">No client database credentials are requested. Unreachable public URLs can still be registered; private network destinations are blocked.</p>
+    </form>
+  </div>
+  <aside class="panel process-panel">
+    <p class="eyebrow">WHAT HAPPENS NEXT</p>
+    <ol class="process-list">
+      <li><span>01</span><div><strong>URL safety check</strong><p>HTTPS, redirects, and DNS are checked before any outbound request.</p></div></li>
+      <li><span>02</span><div><strong>Project card created</strong><p>Portal metadata is saved separately from the original system.</p></div></li>
+      <li><span>03</span><div><strong>Integration review</strong><p>Framing policy, authentication, audit events, and sync are tracked separately.</p></div></li>
+    </ol>
+    <div class="callout callout-info"><strong>Original site stays in control</strong><p>The portal does not copy operational records or bypass the website’s sign-in and permission checks.</p></div>
+  </aside>
+</section>

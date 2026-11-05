@@ -1,0 +1,19 @@
+<section class="page-intro">
+  <div><p class="eyebrow">PORTAL NOTICES</p><h1>Notifications</h1><p>Messages are created by measured health changes and signed integration events.</p></div>
+  <% if (notifications.some((notification) => !notification.readAt)) { %>
+    <form action="/notifications/read-all" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button button-secondary" type="submit">Mark all as read</button></form>
+  <% } %>
+</section>
+<% if (!notifications.length) { %>
+  <section class="empty-state"><div class="empty-icon">♧</div><h2>You’re all caught up</h2><p>There are no notifications yet. Offline/online changes and real signed admin activity can generate them.</p></section>
+<% } else { %>
+  <div class="notification-list">
+    <% notifications.forEach((notification) => { %>
+      <article class="notification-row <%= notification.readAt ? '' : 'notification-unread' %>">
+        <span class="notification-icon notification-type-<%= notification.type.toLowerCase() %>"><%= notification.type === 'PROJECT_OFFLINE' ? '!' : notification.type === 'PROJECT_ONLINE' ? '✓' : '◇' %></span>
+        <div class="notification-main"><strong><%= notification.title %></strong><p><%= notification.message %></p><small><%= notification.project?.name || 'Control Portal' %> · <%= new Date(notification.createdAt).toLocaleString() %></small></div>
+        <% if (!notification.readAt) { %><form action="/notifications/<%= notification.id %>/read" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button button-small button-secondary" type="submit">Mark read</button></form><% } else { %><span class="read-label">Read</span><% } %>
+      </article>
+    <% }) %>
+  </div>
+<% } %>

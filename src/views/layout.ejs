@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en" data-theme="<%= String(theme || 'DARK').toLowerCase() %>" data-user-theme="<%= String(theme || 'DARK').toLowerCase() %>" data-accent="<%= accentColor || '#8b5cf6' %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <meta name="theme-color" content="#090b14">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/icons/portal-logo-dark.svg">
+  <link rel="apple-touch-icon" href="/icons/control-portal-192.png">
+  <title><%= title %> · <%= portalName %></title>
+  <script src="/js/theme-bootstrap.js"></script>
+  <link rel="stylesheet" href="/css/portal-v2.css">
+  <script src="/js/portal.js" defer></script>
+  <script src="/js/pwa-register.js" defer></script>
+  <% if (typeof oneSignalEnabled !== 'undefined' && oneSignalEnabled) { %>
+    <script src="/js/onesignal.js" defer></script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <% } %>
+</head>
+<body data-onesignal-app-id="<%= typeof oneSignalAppId !== 'undefined' ? oneSignalAppId : '' %>" data-onesignal-user-id="<%= currentUser ? currentUser.id : '' %>">
+  <div class="portal-shell">
+    <aside class="sidebar" id="portal-sidebar">
+      <a class="brand" href="/" aria-label="<%= portalName %> home">
+        <% if (configuration && configuration.logoUrl) { %>
+          <img class="brand-image" src="<%= configuration.logoUrl %>" alt="">
+        <% } else { %>
+          <span class="brand-logo-switch" aria-hidden="true">
+            <img class="brand-logo-dark" src="/icons/portal-logo-dark.svg" alt="">
+            <img class="brand-logo-light" src="/icons/portal-logo-light.svg" alt="">
+          </span>
+        <% } %>
+        <span class="brand-copy"><strong><%= portalName %></strong><small>My Websites Hub</small></span>
+      </a>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-item <%= active === 'dashboard' ? 'is-active' : '' %>" href="/"><span class="nav-icon">⌂</span><span>Dashboard</span></a>
+        <a class="nav-item <%= active === 'projects' ? 'is-active' : '' %>" href="/projects"><span class="nav-icon">▣</span><span>My Projects</span></a>
+        <% if (currentUser && ['SUPER_ADMIN', 'ADMIN'].includes(currentUser.role)) { %>
+          <a class="nav-item <%= active === 'add-project' ? 'is-active' : '' %>" href="/projects/new"><span class="nav-icon">＋</span><span>Add Project</span></a>
+        <% } %>
+        <a class="nav-item <%= active === 'integrations' ? 'is-active' : '' %>" href="/integrations"><span class="nav-icon">↗</span><span>Integration Manager</span></a>
+        <a class="nav-item <%= active === 'monitoring' ? 'is-active' : '' %>" href="/monitoring"><span class="nav-icon">⌁</span><span>Monitoring</span></a>
+        <a class="nav-item <%= active === 'activity' ? 'is-active' : '' %>" href="/activity"><span class="nav-icon">◷</span><span>Activity Logs</span></a>
+        <% if (currentUser && currentUser.role === 'SUPER_ADMIN') { %>
+          <a class="nav-item <%= active === 'users' ? 'is-active' : '' %>" href="/users"><span class="nav-icon">♙</span><span>Users &amp; Permissions</span></a>
+        <% } %>
+        <a class="nav-item <%= active === 'settings' ? 'is-active' : '' %>" href="/settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+      </nav>
+      <div class="sidebar-status">
+        <div class="status-line"><span class="status-dot status-dot-online"></span><strong>Portal service</strong><span class="status-word">Online</span></div>
+        <div class="status-line status-muted"><span class="status-symbol">◈</span><span>Portal data</span><span class="status-word">PostgreSQL</span></div>
+        <div class="status-footnote">Project health is measured from recorded checks.</div>
+      </div>
+    </aside>
+
+    <div class="main-frame">
+      <header class="topbar">
+        <button class="icon-button menu-toggle" type="button" aria-label="Open navigation" aria-controls="portal-sidebar" aria-expanded="false" data-menu-toggle>☰</button>
+        <form class="global-search" action="/projects" method="get" role="search">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" name="search" placeholder="Search projects, dashboards, or features…" aria-label="Search projects">
+          <kbd>Enter</kbd>
+        </form>
+        <div class="topbar-actions">
+          <button class="button button-secondary button-small install-app-button" type="button" data-install-app hidden>Install portal</button>
+          <button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Change appearance" title="Change appearance"><span aria-hidden="true">◐</span></button>
+          <a class="icon-button notification-button" href="/notifications" aria-label="Notifications<%= unreadCount ? ', ' + unreadCount + ' unread' : '' %>" title="Notifications">
+            <span aria-hidden="true">♧</span>
+            <% if (unreadCount) { %><span class="notification-count"><%= unreadCount > 9 ? '9+' : unreadCount %></span><% } %>
+          </a>
+          <div class="account-menu">
+            <span class="avatar" aria-hidden="true"><%= (currentUser.name || 'A').slice(0, 1).toUpperCase() %></span>
+            <span class="account-copy"><strong><%= currentUser.name %></strong><small><%= currentUser.role === 'PROJECT_MANAGER' ? 'Developer' : currentUser.role === 'VIEWER' ? 'User' : currentUser.role.replaceAll('_', ' ').toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase()) %></small></span>
+            <form action="/logout" method="post">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="account-logout" type="submit" aria-label="Log out" title="Log out">↗</button>
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-main">
+        <% if (notice) { %>
+          <div class="notice notice-<%= notice.type %>" role="status" data-notice>
+            <span><%= notice.message %></span>
+            <button type="button" class="notice-close" aria-label="Dismiss notification" data-dismiss>×</button>
+          </div>
+        <% } %>
+        <%- body %>
+        <footer class="page-footer"><span>Control Portal</span><span>Central workspace · independent project systems</span></footer>
+      </main>
+    </div>
+  </div>
+  <div class="sidebar-scrim" data-sidebar-scrim></div>
+</body>
+</html>

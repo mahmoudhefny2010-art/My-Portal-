@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  PROJECT_MANAGER
+  VIEWER
+}
+
+enum ProjectStatus {
+  UNKNOWN
+  ONLINE
+  OFFLINE
+  MAINTENANCE
+}
+
+enum IntegrationStatus {
+  NOT_CONFIGURED
+  CONFIGURATION_REQUIRED
+  VERIFIED
+}
+
+enum CapabilityStatus {
+  UNAVAILABLE
+  CONFIGURATION_REQUIRED
+  READY
+  ACTIVE
+}
+
+enum ThemePreference {
+  DARK
+  LIGHT
+  SYSTEM
+}
+
+enum NotificationType {
+  PROJECT_OFFLINE
+  PROJECT_ONLINE
+  INTEGRATION_FAILED
+  INTEGRATION_CONNECTED
+  ADMIN_CHANGE
+  SECURITY_WARNING
+  AUDIT_INTEGRATION_FAILURE
+  SYNCHRONIZATION_FAILURE
+}
+
+model User {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String          @db.VarChar(120)
+  email          String          @unique @db.VarChar(254)
+  passwordHash   String          @db.VarChar(255)
+  role           UserRole        @default(VIEWER)
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  sessions       PortalSession[]
+  preferences    UserPreference?
+  projectAccess  ProjectAccess[]
+  googleIdentity GoogleIdentity?
+  createdProjects Project[]      @relation("ProjectCreator")
+  verifiedIntegrations ProjectIntegration[] @relation("IntegrationVerifier")
+  auditEvents    PortalAuditEvent[]
+  notifications  Notification[]
+}
+
+model GoogleIdentity {
+  id            String   @id @default(uuid()) @db.Uuid
+  googleSubject String   @unique @db.VarChar(255)
+  userId        String   @unique @db.Uuid
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PortalSession {
+  sid       String   @id @db.VarChar(128)
+  data      Json
+  expiresAt DateTime
+  userId    String?  @db.Uuid
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([userId, expiresAt])
+}
+
+model Project {
+  id                   String             @id @default(uuid()) @db.Uuid
+  slug                 String             @unique @db.VarChar(100)
+  name                 String             @db.VarChar(120)
+  siteUrl              String             @db.VarChar(2048)
+  adminUrl             String             @unique @db.VarChar(2048)
+  faviconUrl           String?            @db.VarChar(2048)
+  category             String?            @db.VarChar(80)
+  status               ProjectStatus      @default(UNKNOWN)
+  integrationStatus    IntegrationStatus  @default(CONFIGURATION_REQUIRED)
+  statusMessage        String?            @db.VarChar(500)
+  responseMs           Int?
+  lastHealthCheckAt    DateTime?
+  lastActivityAt       DateTime?
+  nextHealthCheckAt    DateTime           @default(now())
+  archivedAt           DateTime?
+  createdById          String             @db.Uuid
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  createdBy            User               @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  integration          ProjectIntegration?
+  access               ProjectAccess[]
+  healthChecks         ProjectHealthCheck[]
+  auditEvents          PortalAuditEvent[]
+  externalAuditEvents  ExternalAuditEventReference[]
+  capabilities         IntegrationCapability[]
+  verifications        IntegrationVerification[]
+  notifications        Notification[]
+
+  @@index([archivedAt, createdAt])
+  @@index([status, archivedAt])
+  @@index([nextHealthCheckAt])
+}
+
+model ProjectIntegration {
+  id                        String   @id @default(uuid()) @db.Uuid
+  projectId                 String   @unique @db.Uuid
+  framePolicy               String   @default("UNKNOWN") @db.VarChar(40)
+  framePolicyMessage        String?  @db.VarChar(500)
+  webhookSecretCiphertext   String?  @db.Text
+  webhookSecretNonce        String?  @db.VarChar(64)
+  webhookSecretTag          String?  @db.VarChar(64)
+  webhookConfiguredAt       DateTime?
+  lastSignedEventAt         DateTime?
+  frameOrigin               String?  @db.VarChar(2048)
+  embeddingVerifiedAt       DateTime?
+  authenticationVerifiedAt  DateTime?
+  embeddingVerifiedById     String?  @db.Uuid
+  embeddingVerifiedBy       User?    @relation("IntegrationVerifier", fields: [embeddingVerifiedById], references: [id], onDelete: SetNull)
+  liveAuditCapability       CapabilityStatus @default(CONFIGURATION_REQUIRED)
+  syncCapability            CapabilityStatus @default(CONFIGURATION_REQUIRED)
+  conflictCapability        CapabilityStatus @default(CONFIGURATION_REQUIRED)
+  updatedAt                 DateTime @updatedAt
+  project                   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectAccess {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  projectId String   @db.Uuid
+  canManage Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+}
+
+model ProjectHealthCheck {
+  id          String        @id @default(uuid()) @db.Uuid
+  projectId   String        @db.Uuid
+  status      ProjectStatus
+  responseMs  Int?
+  httpStatus  Int?
+  message     String?       @db.VarChar(500)
+  checkedAt   DateTime      @default(now())
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, checkedAt])
+}
+
+model PortalAuditEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorUserId String?  @db.Uuid
+  projectId   String?  @db.Uuid
+  action      String   @db.VarChar(100)
+  targetType  String   @db.VarChar(80)
+  targetId    String?  @db.VarChar(120)
+  summary     String   @db.VarChar(500)
+  details     Json?
+  source      String   @default("PORTAL") @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  actor       User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([projectId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model ExternalAuditEventReference {
+  id               String   @id @default(uuid()) @db.Uuid
+  projectId        String   @db.Uuid
+  externalEventId  String   @db.VarChar(160)
+  action           String   @db.VarChar(100)
+  entityType       String   @db.VarChar(80)
+  entityId         String?  @db.VarChar(160)
+  actorLabel       String?  @db.VarChar(120)
+  actorReference   String?  @db.VarChar(160)
+  severity         String   @default("INFO") @db.VarChar(20)
+  changes          Json?
+  happenedAt       DateTime
+  receivedAt       DateTime @default(now())
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, externalEventId])
+  @@index([projectId, happenedAt])
+}
+
+model IntegrationCapability {
+  id          String           @id @default(uuid()) @db.Uuid
+  projectId   String           @db.Uuid
+  name        String           @db.VarChar(80)
+  status      CapabilityStatus @default(CONFIGURATION_REQUIRED)
+  evidence    String?          @db.VarChar(500)
+  verifiedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, name])
+  @@index([projectId, status])
+}
+
+model IntegrationVerification {
+  id             String   @id @default(uuid()) @db.Uuid
+  projectId      String   @db.Uuid
+  outcome        String   @db.VarChar(40)
+  reason         String   @db.VarChar(500)
+  httpStatus     Int?
+  framePolicy    String   @db.VarChar(40)
+  durationMs     Int?
+  verifiedAt     DateTime @default(now())
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, verifiedAt])
+}
+
+model Notification {
+  id               String           @id @default(uuid()) @db.Uuid
+  userId           String?          @db.Uuid
+  projectId        String?          @db.Uuid
+  type             NotificationType
+  title            String           @db.VarChar(140)
+  message          String           @db.VarChar(500)
+  readAt           DateTime?
+  createdAt        DateTime         @default(now())
+  user             User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project          Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt, createdAt])
+}
+
+model UserPreference {
+  id                    String          @id @default(uuid()) @db.Uuid
+  userId                String          @unique @db.Uuid
+  theme                 ThemePreference @default(DARK)
+  accentColor           String          @default("#8b5cf6") @db.VarChar(7)
+  notificationSettings  Json?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PortalConfiguration {
+  id          String   @id @default("main") @db.VarChar(30)
+  portalName  String   @default("Control Portal") @db.VarChar(120)
+  logoUrl     String?  @db.VarChar(2048)
+  accentColor String   @default("#8b5cf6") @db.VarChar(7)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuthenticationAttempt {
+  id          String   @id @default(uuid()) @db.Uuid
+  identityKey String   @db.VarChar(64)
+  networkKey  String   @db.VarChar(64)
+  succeeded   Boolean  @default(false)
+  occurredAt  DateTime @default(now())
+
+  @@index([identityKey, occurredAt])
+  @@index([networkKey, occurredAt])
+}

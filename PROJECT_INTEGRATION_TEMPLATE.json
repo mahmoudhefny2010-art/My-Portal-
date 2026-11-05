@@ -1,0 +1,86 @@
+{
+  "contractVersion": "1.0",
+  "project": {
+    "name": "Example project",
+    "adminUrl": "https://example.com/admin",
+    "siteUrl": "https://example.com"
+  },
+  "capabilities": {
+    "secureEmbedding": {
+      "status": "configuration-required",
+      "portalOrigin": "https://portal.example.com",
+      "requirements": [
+        "Explicit CSP frame-ancestors allow rule for the portal origin",
+        "No conflicting X-Frame-Options policy",
+        "Normal authentication and authorization work inside the frame",
+        "Owner review of navigation, forms, and an authorized write"
+      ]
+    },
+    "adminAuditFeed": {
+      "status": "configuration-required",
+      "delivery": "signed-webhook",
+      "endpoint": "https://portal.example.com/api/projects/example-project/audit-events",
+      "secretEnvironmentVariable": "CONTROL_PORTAL_WEBHOOK_SECRET",
+      "timestampHeader": "x-control-portal-timestamp",
+      "signatureHeader": "x-control-portal-signature",
+      "signature": "HMAC-SHA256(secret, timestamp + '.' + exact_raw_json_body)",
+      "retryWindowSeconds": 300,
+      "maxPayloadBytes": 524288,
+      "deduplicateBy": [
+        "projectId",
+        "event.id"
+      ]
+    },
+    "liveDataSync": {
+      "status": "configuration-required",
+      "sourceOfTruth": "original-project-backend",
+      "required": [
+        "Project-scoped authorization",
+        "Stable record and event identifiers",
+        "Idempotent delivery",
+        "Reconnect and refresh handling",
+        "No unrestricted shared admin token"
+      ]
+    },
+    "optimisticConcurrency": {
+      "status": "configuration-required",
+      "required": [
+        "Record version or ETag on reads",
+        "Atomic version comparison on writes",
+        "409 Conflict or 412 Precondition Failed for stale writes",
+        "Explicit conflict review before retry"
+      ]
+    }
+  },
+  "auditEvent": {
+    "id": "evt_stable_unique_id",
+    "occurredAt": "2026-08-25T12:30:00.000Z",
+    "action": "updated",
+    "entityType": "product",
+    "entityId": "record_123",
+    "severity": "INFO",
+    "actor": {
+      "id": "pseudonymous_staff_id",
+      "label": "Warehouse manager"
+    },
+    "changes": [
+      {
+        "field": "price",
+        "before": 500,
+        "after": 600
+      }
+    ]
+  },
+  "privacy": {
+    "exclude": [
+      "passwords",
+      "tokens",
+      "cookies",
+      "payment details",
+      "customer records",
+      "email addresses",
+      "phone numbers",
+      "street addresses"
+    ]
+  }
+}

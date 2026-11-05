@@ -1,0 +1,57 @@
+<article class="project-card">
+  <% const canManageProject = currentUser.role === 'SUPER_ADMIN' || project.access?.some((access) => access.canManage); %>
+  <div class="project-card-top">
+    <div class="project-icon <%= project.status === 'OFFLINE' ? 'project-icon-muted' : '' %>">
+      <% if (project.faviconUrl) { %>
+        <img src="<%= project.faviconUrl %>" alt="" loading="lazy" referrerpolicy="no-referrer">
+      <% } else { %>
+        <span aria-hidden="true"><%= project.name.slice(0, 1).toUpperCase() %></span>
+      <% } %>
+    </div>
+    <div class="project-title">
+      <h3><a href="/projects/<%= project.slug %>/workspace"><%= project.name %></a></h3>
+      <a class="project-url" href="<%= project.siteUrl %>" target="_blank" rel="noopener noreferrer"><%= project.siteUrl.replace(/^https?:\/\//, '') %></a>
+    </div>
+    <details class="project-menu">
+      <summary aria-label="Actions for <%= project.name %>" title="Project actions">⋮</summary>
+      <div class="menu-popover">
+        <% if (!project.archivedAt) { %>
+          <a href="/projects/<%= project.slug %>/workspace">Open workspace</a>
+          <a href="/projects/<%= project.slug %>/audit">Admin audit log</a>
+          <a href="/projects/<%= project.slug %>/activity">Portal project activity</a>
+          <% if (canManageProject) { %>
+            <a href="/projects/<%= project.slug %>/edit">Edit project</a>
+            <a href="/integrations">Integration settings</a>
+            <form action="/projects/<%= project.slug %>/check" method="post">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit">Test connection</button>
+            </form>
+            <form action="/projects/<%= project.slug %>/archive" method="post" data-confirm="Archive this project in the portal?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit">Archive project</button>
+            </form>
+          <% } %>
+        <% } else if (canManageProject) { %>
+          <form action="/projects/<%= project.slug %>/archive" method="post" data-confirm="Restore this project in the portal?">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit">Restore project</button>
+          </form>
+        <% } %>
+      </div>
+    </details>
+  </div>
+  <div class="project-meta-row">
+    <span class="status-pill status-<%= project.status.toLowerCase() %>"><i></i><%= project.status === 'UNKNOWN' ? 'Not checked' : project.status.toLowerCase() %></span>
+    <span class="integration-pill <%= project.integrationStatus === 'VERIFIED' ? 'integration-ready' : '' %>"><%= project.integrationStatus === 'VERIFIED' ? 'Workspace verified' : 'Setup required' %></span>
+  </div>
+  <div class="project-details">
+    <span><span class="detail-label">Admin URL</span><span class="detail-value"><%= project.adminUrl.replace(/^https?:\/\//, '') %></span></span>
+    <span><span class="detail-label">Last check</span><span class="detail-value"><%= project.lastHealthCheckAt ? new Date(project.lastHealthCheckAt).toLocaleString() : 'Not checked yet' %></span></span>
+  </div>
+  <div class="project-actions">
+    <% if (project.archivedAt) { %>
+      <% if (canManageProject) { %><form action="/projects/<%= project.slug %>/archive" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button button-primary" type="submit">Restore project</button></form><% } else { %><span class="button button-secondary">Archived in portal</span><% } %>
+    <% } else { %><a class="button button-primary" href="/projects/<%= project.slug %>/workspace"><%= project.integrationStatus === 'VERIFIED' ? 'Open Dashboard' : 'Open Workspace' %><span aria-hidden="true">↗</span></a><% } %>
+    <a class="button button-secondary" href="<%= project.siteUrl %>" target="_blank" rel="noopener noreferrer">Visit Site<span aria-hidden="true">↗</span></a>
+  </div>
+</article>

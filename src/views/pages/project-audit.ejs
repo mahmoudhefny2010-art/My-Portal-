@@ -1,0 +1,36 @@
+<section class="page-intro">
+  <div><p class="eyebrow">EXTERNAL ADMIN ACTIVITY</p><h1><%= project.name %> audit log</h1><p>Events received from the original website over its signed integration endpoint.</p></div>
+  <a class="button button-secondary" href="/projects/<%= project.slug %>/workspace">← Project workspace</a>
+</section>
+<div class="callout callout-info"><strong>Source and verification</strong><p>Entries are signed by the connected website and deduplicated by event ID. The actor identity is reported by that website; this portal cannot independently authenticate the client’s user. This page checks for new events every 15 seconds.</p></div>
+<form class="filter-toolbar audit-filter" action="/projects/<%= project.slug %>/audit" method="get">
+  <label class="sr-only" for="audit-search">Filter audit events</label>
+  <input id="audit-search" type="search" name="search" value="<%= query %>" placeholder="Filter action, actor, or record type">
+  <button class="button button-secondary" type="submit">Filter events</button>
+</form>
+<% const lastReceivedAt = events.reduce((latest, event) => event.receivedAt > latest ? event.receivedAt : latest, new Date(0)); %>
+<div class="audit-live-list" data-audit-feed="<%= project.slug %>" data-last-event="<%= events.length ? lastReceivedAt.toISOString() : new Date().toISOString() %>">
+<% if (!events.length) { %>
+  <section class="empty-state">
+    <div class="empty-icon">◷</div><h2>No external admin events received</h2>
+    <p>Configure the signed audit webhook in Integration Manager. Portal activity logs remain available separately.</p>
+    <a class="button button-primary" href="/integrations">Configure audit events</a>
+  </section>
+<% } else { %>
+  <div class="audit-event-list">
+    <% events.forEach((event) => { %>
+      <article class="audit-event">
+        <div class="audit-event-icon severity-<%= event.severity.toLowerCase() %>"><%= event.severity === 'ERROR' ? '!' : event.severity === 'SUCCESS' ? '✓' : '•' %></div>
+        <div class="audit-event-main">
+          <div class="audit-event-head"><strong><%= event.action %></strong><span class="severity-label"><%= event.severity %></span><time datetime="<%= event.happenedAt.toISOString() %>"><%= new Date(event.happenedAt).toLocaleString() %></time></div>
+          <p><%= event.actorLabel || 'Connected website administrator' %> · <%= event.entityType %><%= event.entityId ? ' / ' + event.entityId : '' %></p>
+          <% if (Array.isArray(event.changes) && event.changes.length) { %>
+            <div class="change-list"><% event.changes.forEach((change) => { %><div><span><%= change.field %></span><code><%= Object.hasOwn(change, 'before') ? JSON.stringify(change.before) : '—' %></code><span aria-hidden="true">→</span><code><%= Object.hasOwn(change, 'after') ? JSON.stringify(change.after) : '—' %></code></div><% }) %></div>
+          <% } %>
+          <small>Event ID <code><%= event.externalEventId %></code> · received <%= new Date(event.receivedAt).toLocaleString() %></small>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+<% } %>
+</div>

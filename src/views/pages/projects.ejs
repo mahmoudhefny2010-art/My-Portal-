@@ -1,0 +1,77 @@
+<section class="page-intro">
+  <div><p class="eyebrow">PORTFOLIO</p><h1><%= title %></h1><p>Keep the portal’s project records separate from each website and its database.</p></div>
+  <% if (['SUPER_ADMIN', 'ADMIN'].includes(currentUser.role)) { %><a class="button button-primary" href="/projects/new"><span aria-hidden="true">＋</span> Add Project</a><% } %>
+</section>
+
+<div class="filter-toolbar">
+  <form class="project-search" action="/projects" method="get">
+    <% if (filters.archived) { %><input type="hidden" name="archived" value="1"><% } %>
+    <span aria-hidden="true">⌕</span>
+    <input type="search" name="search" value="<%= filters.query %>" placeholder="Search projects…" aria-label="Search projects">
+    <button class="button button-small button-secondary" type="submit">Search</button>
+  </form>
+  <form class="filter-options" action="/projects" method="get">
+    <% if (filters.query) { %><input type="hidden" name="search" value="<%= filters.query %>"><% } %>
+    <% if (filters.archived) { %><input type="hidden" name="archived" value="1"><% } %>
+    <label class="sr-only" for="project-status">Filter by status</label>
+    <select id="project-status" name="status" data-autosubmit>
+      <option value="">All statuses</option>
+      <option value="ONLINE" <%= filters.status === 'ONLINE' ? 'selected' : '' %>>Online</option>
+      <option value="OFFLINE" <%= filters.status === 'OFFLINE' ? 'selected' : '' %>>Offline</option>
+      <option value="UNKNOWN" <%= filters.status === 'UNKNOWN' ? 'selected' : '' %>>Not checked</option>
+      <option value="MAINTENANCE" <%= filters.status === 'MAINTENANCE' ? 'selected' : '' %>>Maintenance</option>
+    </select>
+    <label class="sr-only" for="project-sort">Sort projects</label>
+    <select id="project-sort" name="sort" data-autosubmit>
+      <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest first</option>
+      <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest first</option>
+    </select>
+    <input type="hidden" name="view" value="<%= filters.view %>">
+    <div class="view-toggle" aria-label="Project view">
+      <a class="<%= filters.view === 'grid' ? 'is-selected' : '' %>" href="/projects?view=grid<%= filters.query ? '&search=' + encodeURIComponent(filters.query) : '' %><%= filters.status ? '&status=' + filters.status : '' %>" aria-label="Grid view">▦</a>
+      <a class="<%= filters.view === 'list' ? 'is-selected' : '' %>" href="/projects?view=list<%= filters.query ? '&search=' + encodeURIComponent(filters.query) : '' %><%= filters.status ? '&status=' + filters.status : '' %>" aria-label="List view">☷</a>
+    </div>
+  </form>
+</div>
+<div class="project-count"><strong><%= pagination.total %></strong> <%= pagination.total === 1 ? 'project' : 'projects' %><% if (filters.archived) { %> archived<% } %></div>
+
+<% if (!projects.length) { %>
+  <section class="empty-state">
+    <div class="empty-icon"><%= filters.query || filters.status ? '⌕' : '▣' %></div>
+    <h2><%= filters.query || filters.status ? 'No matching projects' : 'No projects yet' %></h2>
+    <p><%= filters.query || filters.status ? 'Try a different search or status filter.' : 'Paste an Admin Dashboard URL to create your first project card.' %></p>
+    <% if (!filters.archived && !filters.query && !filters.status && ['SUPER_ADMIN', 'ADMIN'].includes(currentUser.role)) { %><a class="button button-primary" href="/projects/new">Add Project</a><% } %>
+    <% if (filters.archived) { %><a class="text-link" href="/projects">Back to active projects</a><% } %>
+  </section>
+<% } else if (filters.view === 'grid') { %>
+  <section class="project-grid" aria-label="Projects">
+    <% projects.forEach((project) => { %><%- include('../partials/project-card', { project, csrfToken }) %><% }) %>
+  </section>
+<% } else { %>
+  <div class="table-scroll">
+    <table class="data-table project-table">
+      <thead><tr><th>Project</th><th>Website</th><th>Status</th><th>Integration</th><th>Last check</th><th>Actions</th></tr></thead>
+      <tbody>
+      <% projects.forEach((project) => { %>
+        <tr>
+          <td><a class="table-project-name" href="/projects/<%= project.slug %>/workspace"><%= project.name %></a><small><%= project.category || 'Uncategorized' %></small></td>
+          <td><a href="<%= project.siteUrl %>" target="_blank" rel="noopener noreferrer"><%= project.siteUrl.replace(/^https?:\/\//, '') %></a></td>
+          <td><span class="status-pill status-<%= project.status.toLowerCase() %>"><i></i><%= project.status === 'UNKNOWN' ? 'Not checked' : project.status.toLowerCase() %></span></td>
+          <td><%= project.integrationStatus === 'VERIFIED' ? 'Owner verified' : 'Setup required' %></td>
+          <td><%= project.lastHealthCheckAt ? new Date(project.lastHealthCheckAt).toLocaleString() : '—' %></td>
+          <td><a class="table-action" href="/projects/<%= project.slug %>/workspace">Workspace →</a></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
+
+<% if (pagination.pages > 1) { %>
+  <nav class="pagination" aria-label="Project pages">
+    <% if (pagination.page > 1) { %><a href="/projects?page=<%= pagination.page - 1 %>&view=<%= filters.view %>&sort=<%= filters.sort %><%= filters.query ? '&search=' + encodeURIComponent(filters.query) : '' %><%= filters.status ? '&status=' + filters.status : '' %>">← Previous</a><% } %>
+    <span>Page <%= pagination.page %> of <%= pagination.pages %></span>
+    <% if (pagination.page < pagination.pages) { %><a href="/projects?page=<%= pagination.page + 1 %>&view=<%= filters.view %>&sort=<%= filters.sort %><%= filters.query ? '&search=' + encodeURIComponent(filters.query) : '' %><%= filters.status ? '&status=' + filters.status : '' %>">Next →</a><% } %>
+  </nav>
+<% } %>
+<div class="archive-link"><a href="/projects?archived=1">View archived projects</a></div>

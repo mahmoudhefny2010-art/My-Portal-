@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <meta name="theme-color" content="#090b14">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/icons/portal-logo-dark.svg">
+  <link rel="apple-touch-icon" href="/icons/control-portal-192.png">
+  <title>Sign in · <%= portalName %></title>
+  <script src="/js/theme-bootstrap.js"></script>
+  <script src="/js/pwa-register.js" defer></script>
+  <link rel="stylesheet" href="/css/portal-v2.css">
+</head>
+<body class="auth-body">
+  <main class="auth-layout">
+    <section class="auth-showcase" aria-labelledby="auth-showcase-title">
+      <a class="auth-brand" href="/login" aria-label="<%= portalName %> sign in">
+        <span class="brand-logo-switch" aria-hidden="true">
+          <img class="brand-logo-dark" src="/icons/portal-logo-dark.svg" alt="">
+          <img class="brand-logo-light" src="/icons/portal-logo-light.svg" alt="">
+        </span>
+        <strong><%= portalName %></strong>
+      </a>
+
+      <div class="auth-showcase-copy">
+        <p class="auth-overline"><span aria-hidden="true"></span> YOUR DIGITAL HQ</p>
+        <h1 id="auth-showcase-title">Every website.<br><span>One clear view.</span></h1>
+        <p class="auth-lede">A focused workspace to keep your projects, monitoring, and team access together.</p>
+      </div>
+
+      <div class="auth-orbit-art" aria-hidden="true">
+        <span class="auth-orbit auth-orbit-one"></span>
+        <span class="auth-orbit auth-orbit-two"></span>
+        <span class="auth-orbit auth-orbit-three"></span>
+        <span class="auth-orbit-node auth-orbit-node-one">⌘</span>
+        <span class="auth-orbit-node auth-orbit-node-two">⌁</span>
+        <span class="auth-orbit-node auth-orbit-node-three">◈</span>
+        <span class="auth-orbit-core" aria-hidden="true">
+          <span class="brand-logo-switch">
+            <img class="brand-logo-dark" src="/icons/portal-logo-dark.svg" alt="">
+            <img class="brand-logo-light" src="/icons/portal-logo-light.svg" alt="">
+          </span>
+        </span>
+      </div>
+
+      <div class="auth-feature-strip" aria-label="Portal features">
+        <span><i aria-hidden="true">01</i> Projects</span>
+        <span><i aria-hidden="true">02</i> Monitoring</span>
+        <span><i aria-hidden="true">03</i> Team access</span>
+      </div>
+      <p class="auth-showcase-note">One secure place for the websites you manage.</p>
+    </section>
+
+    <section class="auth-access" aria-labelledby="auth-form-title">
+      <div class="auth-card">
+        <div class="auth-card-heading">
+          <span class="auth-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 20 7v5c0 4.5-3 7.4-8 9-5-1.6-8-4.5-8-9V7l8-4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <p class="eyebrow">PRIVATE ADMIN WORKSPACE</p>
+        </div>
+        <h2 id="auth-form-title">Welcome back</h2>
+        <p class="auth-card-intro">Sign in to manage your portal projects.</p>
+
+        <% if (error) { %><div class="form-alert" role="alert"><%= error %></div><% } %>
+
+        <form action="/login" method="post" class="stack-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="email">Email address</label>
+          <input id="email" type="email" name="email" autocomplete="username" required maxlength="254" placeholder="you@example.com">
+          <label for="password">Password</label>
+          <input id="password" type="password" name="password" autocomplete="current-password" required placeholder="Enter your password">
+          <button class="button button-primary button-wide auth-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
+        </form>
+
+        <% if (typeof googleSignInEnabled !== 'undefined' && googleSignInEnabled) { %>
+          <div class="login-provider-divider"><span>or continue with</span></div>
+          <a class="button button-secondary button-wide google-signin-button" href="/auth/google">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.9c-.58 2.96-2.25 5.48-4.71 7.18l7.62 5.91c4.45-4.1 7.17-10.14 7.17-17.56Z"/><path fill="#FBBC05" d="M10.53 28.59a14.4 14.4 0 0 1 0-9.18l-7.98-6.19a23.9 23.9 0 0 0 0 21.56l7.98-6.19Z"/><path fill="#34A853" d="M24 48c6.47 0 11.91-2.13 15.88-5.89l-7.62-5.91c-2.12 1.43-4.84 2.28-8.26 2.28-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"/></svg>
+            Continue with Google
+          </a>
+        <% } %>
+
+        <div class="auth-card-footnote">
+          <span aria-hidden="true">✓</span>
+          <p>Portal access is separate from each connected website’s authentication.</p>
+        </div>
+      </div>
+      <p class="auth-footnote">No public sign-up <span aria-hidden="true">·</span> Owner accounts are created from the server command line.</p>
+    </section>
+  </main>
+</body>
+</html>

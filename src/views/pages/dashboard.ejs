@@ -1,0 +1,48 @@
+<section class="welcome-section">
+  <div class="welcome-copy">
+    <p class="eyebrow">YOUR CENTRAL WORKSPACE</p>
+    <h1>Welcome back, <%= currentUser.name.split(' ')[0] %> <span class="wave" aria-hidden="true">👋</span></h1>
+    <p>Manage your websites and admin dashboards from one central workspace.</p>
+    <div class="quick-actions">
+      <% if (['SUPER_ADMIN', 'ADMIN'].includes(currentUser.role)) { %><a class="button button-primary" href="/projects/new"><span aria-hidden="true">＋</span> Add New Project</a><% } %>
+      <a class="button button-secondary" href="/integrations"><span aria-hidden="true">◇</span> Integration Guide</a>
+      <a class="button button-secondary" href="/activity"><span aria-hidden="true">⌁</span> View Logs</a>
+    </div>
+  </div>
+  <div class="welcome-art" aria-hidden="true">
+    <div class="art-orbit"></div>
+    <div class="art-window art-window-back"><span></span><span></span><span></span><div class="art-bars"></div></div>
+    <div class="art-window art-window-front"><span></span><span></span><span></span><div class="art-chart"><i></i><i></i><i></i><i></i></div><div class="art-code">&lt;/&gt;</div></div>
+  </div>
+</section>
+
+<section class="stats-grid" aria-label="Portal statistics">
+  <article class="stat-card stat-purple"><span class="stat-icon">▱</span><div><span class="stat-label">Total Projects</span><strong><%= stats.total %></strong><small>Registered in this portal</small></div><span class="stat-spark" aria-hidden="true">⌁</span></article>
+  <article class="stat-card stat-green"><span class="stat-icon">✓</span><div><span class="stat-label">Online Projects</span><strong><%= stats.online %></strong><small>From the latest safe check</small></div><span class="stat-spark" aria-hidden="true">⌁</span></article>
+  <article class="stat-card stat-blue"><span class="stat-icon">◉</span><div><span class="stat-label">Connected Projects</span><strong><%= stats.connected %></strong><small>Embedding reviewed by an owner</small></div><span class="stat-spark" aria-hidden="true">⌁</span></article>
+  <article class="stat-card stat-amber"><span class="stat-icon">⌁</span><div><span class="stat-label">Observed Availability</span><strong><%= stats.uptime %></strong><small><%= stats.measured ? 'Based on ' + stats.measured + ' checks in 30 days' : 'No health checks recorded yet' %></small></div><span class="stat-spark" aria-hidden="true">⌁</span></article>
+</section>
+
+<section class="section-heading">
+  <div><p class="eyebrow">OVERVIEW</p><h2><span class="heading-mark">▱</span> My Projects</h2></div>
+  <div class="section-tools">
+    <a class="text-link" href="/projects">View all projects <span aria-hidden="true">→</span></a>
+    <a class="icon-button grid-toggle" href="/projects?view=grid" aria-label="Grid view">▦</a>
+    <a class="icon-button grid-toggle" href="/projects?view=list" aria-label="List view">☷</a>
+  </div>
+</section>
+
+<% if (projects.length) { %>
+  <section class="project-grid" aria-label="Recent projects">
+    <% projects.forEach((project) => { %>
+      <%- include('../partials/project-card', { project, csrfToken }) %>
+    <% }) %>
+  </section>
+<% } else { %>
+  <section class="empty-state">
+    <div class="empty-icon">▣</div>
+    <h3>Your project space is ready</h3>
+    <p>Add an Admin Dashboard URL to register your first website. The portal will report honestly when the site or integration still needs setup.</p>
+    <% if (['SUPER_ADMIN', 'ADMIN'].includes(currentUser.role)) { %><a class="button button-primary" href="/projects/new">Add your first project <span aria-hidden="true">→</span></a><% } %>
+  </section>
+<% } %>
